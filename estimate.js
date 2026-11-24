@@ -2,7 +2,7 @@
 // EDIT PRICES HERE (CAD). front = [low, high]; SIDE = per easy side; BACK = [low, high]. Large / estate = custom quote.
 var P={'Detached':{front:[3000,4000]},'Semi-detached':{front:[2200,3000]},'Bungalow':{front:[2500,3500]}},SIDE=800,BACK=[1000,1500];
 // FORM EMAILS: get a free access key at https://web3forms.com (enter inquiry@osmpro.ca) and paste it here.
-var WEB3FORMS_KEY='PASTE-YOUR-KEY-HERE';
+var WEB3FORMS_KEY=var WEB3FORMS_KEY='5c0f2739-38e9-4c23-8fde-5b4b9a2ccad7';
 var f=document.getElementById('est'),steps=[].slice.call(f.querySelectorAll('.step')),cur=0;
 var all=document.getElementById('all'),cov=[].slice.call(f.querySelectorAll('input[name=coverage]:not(#all)'));
 function $(id){return document.getElementById(id)}
