@@ -65,17 +65,22 @@ $('calc').onclick=function(){
  var pr=v.play();if(pr&&pr.catch)pr.catch(function(){v.muted=true;var p2=v.play();if(p2&&p2.catch)p2.catch(fallback);});
  setTimeout(function(){if(v.readyState===0)fallback();},5000);
 };
-// ADDRESS SUGGESTIONS (free Photon / OpenStreetMap search)
+// ADDRESS SUGGESTIONS. Optional: paste a free Geoapify key (geoapify.com, 3,000 lookups/day) for the best results.
+var GEOAPIFY_KEY='';
 (function(){
- var ai=f.elements.address,ul=$('sug'),tm,items=[],act=-1,PROV={Ontario:'ON',Quebec:'QC','Québec':'QC','British Columbia':'BC',Alberta:'AB',Manitoba:'MB',Saskatchewan:'SK','Nova Scotia':'NS','New Brunswick':'NB','Newfoundland and Labrador':'NL','Prince Edward Island':'PE'};
+ var ai=f.elements.address,ul=$('sug'),tm,items=[],act=-1,seq=0,PROV={Ontario:'ON',Quebec:'QC','Québec':'QC','British Columbia':'BC',Alberta:'AB',Manitoba:'MB',Saskatchewan:'SK','Nova Scotia':'NS','New Brunswick':'NB','Newfoundland and Labrador':'NL','Prince Edward Island':'PE'};
  function hide(){ul.hidden=true;ai.setAttribute('aria-expanded','false');act=-1;}
- function label(p){var l1=((p.housenumber?p.housenumber+' ':'')+(p.street||p.name||'')).trim(),city=p.city||p.town||p.village||p.district||p.county||'',pr=PROV[p.state]||p.state||'';
-  return {main:l1,sub:[city,pr,p.postcode].filter(Boolean).join(', '),full:[l1,city,pr,p.postcode].filter(Boolean).join(', ')};}
+ function mk(num,street,city,prov,zip){var main=((num?num+' ':'')+(street||'')).trim();return {main:main,sub:[city,PROV[prov]||prov,zip].filter(Boolean).join(', '),full:[main,city,PROV[prov]||prov,zip].filter(Boolean).join(', ')};}
+ function get(u){return fetch(u).then(function(r){if(!r.ok)throw 0;return r.json()});}
+ function viaGeoapify(q){return get('https://api.geoapify.com/v1/geocode/autocomplete?format=json&limit=6&filter=countrycode:ca&bias=proximity:-80.25,43.55&text='+encodeURIComponent(q)+'&apiKey='+GEOAPIFY_KEY).then(function(d){return (d.results||[]).map(function(r){return mk(r.housenumber,r.street||r.name,r.city||r.town||r.village,r.state_code||r.state,r.postcode)})});}
+ function viaNominatim(q){return get('https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=ca&limit=6&viewbox=-81.6,43.0,-79.4,44.2&q='+encodeURIComponent(q)).then(function(d){return d.map(function(r){var a=r.address||{};return mk(a.house_number,a.road||r.display_name.split(',')[0],a.city||a.town||a.village||a.suburb||a.municipality,a.state,a.postcode)})});}
+ function viaPhoton(q){return get('https://photon.komoot.io/api/?lang=en&limit=8&lat=43.55&lon=-80.25&q='+encodeURIComponent(q)).then(function(d){return (d.features||[]).filter(function(x){return x.properties.countrycode==='CA'}).map(function(x){var p=x.properties;return mk(p.housenumber,p.street||p.name,p.city||p.town||p.village||p.district,p.state,p.postcode)})});}
+ function find(q){var a=GEOAPIFY_KEY?viaGeoapify(q):viaNominatim(q);return a.catch(function(){return []}).then(function(r){return r.length?r:viaPhoton(q).catch(function(){return []})});}
  function pick(k){ai.value=items[k].full;hide();update();}
- function render(){ul.innerHTML='';items.forEach(function(it,k){var li=document.createElement('li');li.setAttribute('role','option');li.innerHTML='<b></b><small></small>';li.firstChild.textContent=it.main;li.lastChild.textContent=it.sub;li.onmousedown=function(e){e.preventDefault();pick(k);};ul.appendChild(li);});ul.hidden=!items.length;ai.setAttribute('aria-expanded',String(!!items.length));}
- function search(q){fetch('https://photon.komoot.io/api/?lang=en&limit=8&lat=43.55&lon=-80.25&q='+encodeURIComponent(q)).then(function(r){return r.json()}).then(function(d){
-  var seen={};items=(d.features||[]).filter(function(x){return x.properties.countrycode==='CA'&&(x.properties.street||x.properties.name)}).map(function(x){return label(x.properties)}).filter(function(x){if(seen[x.full])return false;seen[x.full]=1;return true}).slice(0,5);render();}).catch(hide);}
- ai.addEventListener('input',function(){clearTimeout(tm);var q=ai.value.trim();if(q.length<4){items=[];hide();return;}tm=setTimeout(function(){search(q)},350);});
+ function render(q){var seen={},list=items.filter(function(x){if(!x.main||seen[x.full])return false;seen[x.full]=1;return true}).slice(0,5);list.push({main:'Use “'+q+'” as my address',sub:'',full:q,typed:true});items=list;ul.innerHTML='';
+  items.forEach(function(it,k){var li=document.createElement('li');li.setAttribute('role','option');if(it.typed)li.className='typed';li.innerHTML='<b></b><small></small>';li.firstChild.textContent=it.main;li.lastChild.textContent=it.sub;li.onmousedown=function(e){e.preventDefault();pick(k);};ul.appendChild(li);});
+  ul.hidden=false;ai.setAttribute('aria-expanded','true');}
+ ai.addEventListener('input',function(){clearTimeout(tm);var q=ai.value.trim();if(q.length<4){items=[];hide();return;}var my=++seq;tm=setTimeout(function(){find(q).then(function(r){if(my!==seq)return;items=r;render(q);});},450);});
  ai.addEventListener('keydown',function(e){if(ul.hidden)return;var n=items.length;
   if(e.key==='ArrowDown'){e.preventDefault();act=(act+1)%n;}else if(e.key==='ArrowUp'){e.preventDefault();act=(act-1+n)%n;}
   else if(e.key==='Enter'&&act>=0){e.preventDefault();e.stopPropagation();pick(act);return;}else if(e.key==='Escape'){hide();return;}else return;
