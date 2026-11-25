@@ -65,5 +65,22 @@ $('calc').onclick=function(){
  var pr=v.play();if(pr&&pr.catch)pr.catch(function(){v.muted=true;var p2=v.play();if(p2&&p2.catch)p2.catch(fallback);});
  setTimeout(function(){if(v.readyState===0)fallback();},5000);
 };
+// ADDRESS SUGGESTIONS (free Photon / OpenStreetMap search)
+(function(){
+ var ai=f.elements.address,ul=$('sug'),tm,items=[],act=-1,PROV={Ontario:'ON',Quebec:'QC','Québec':'QC','British Columbia':'BC',Alberta:'AB',Manitoba:'MB',Saskatchewan:'SK','Nova Scotia':'NS','New Brunswick':'NB','Newfoundland and Labrador':'NL','Prince Edward Island':'PE'};
+ function hide(){ul.hidden=true;ai.setAttribute('aria-expanded','false');act=-1;}
+ function label(p){var l1=((p.housenumber?p.housenumber+' ':'')+(p.street||p.name||'')).trim(),city=p.city||p.town||p.village||p.district||p.county||'',pr=PROV[p.state]||p.state||'';
+  return {main:l1,sub:[city,pr,p.postcode].filter(Boolean).join(', '),full:[l1,city,pr,p.postcode].filter(Boolean).join(', ')};}
+ function pick(k){ai.value=items[k].full;hide();update();}
+ function render(){ul.innerHTML='';items.forEach(function(it,k){var li=document.createElement('li');li.setAttribute('role','option');li.innerHTML='<b></b><small></small>';li.firstChild.textContent=it.main;li.lastChild.textContent=it.sub;li.onmousedown=function(e){e.preventDefault();pick(k);};ul.appendChild(li);});ul.hidden=!items.length;ai.setAttribute('aria-expanded',String(!!items.length));}
+ function search(q){fetch('https://photon.komoot.io/api/?lang=en&limit=8&lat=43.55&lon=-80.25&q='+encodeURIComponent(q)).then(function(r){return r.json()}).then(function(d){
+  var seen={};items=(d.features||[]).filter(function(x){return x.properties.countrycode==='CA'&&(x.properties.street||x.properties.name)}).map(function(x){return label(x.properties)}).filter(function(x){if(seen[x.full])return false;seen[x.full]=1;return true}).slice(0,5);render();}).catch(hide);}
+ ai.addEventListener('input',function(){clearTimeout(tm);var q=ai.value.trim();if(q.length<4){items=[];hide();return;}tm=setTimeout(function(){search(q)},350);});
+ ai.addEventListener('keydown',function(e){if(ul.hidden)return;var n=items.length;
+  if(e.key==='ArrowDown'){e.preventDefault();act=(act+1)%n;}else if(e.key==='ArrowUp'){e.preventDefault();act=(act-1+n)%n;}
+  else if(e.key==='Enter'&&act>=0){e.preventDefault();e.stopPropagation();pick(act);return;}else if(e.key==='Escape'){hide();return;}else return;
+  [].forEach.call(ul.children,function(li,k){li.setAttribute('aria-selected',k===act)});},true);
+ ai.addEventListener('blur',function(){setTimeout(hide,150)});
+})();
 show(0);
 })();
