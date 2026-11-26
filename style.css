@@ -145,3 +145,6 @@ footer{padding:48px 0 24px}.fgrid{display:grid;grid-template-columns:1.3fr 1fr 1
 .pgrid{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 2px 12px;-webkit-overflow-scrolling:touch}
 .pgrid .pv{flex:0 0 150px;scroll-snap-align:start}
 @media(min-width:1000px){.pgrid{display:grid;grid-template-columns:repeat(7,1fr);overflow:visible;padding:0}.pgrid .pv{flex:none}}
+#rtitle{font-size:1.7rem;line-height:1.2}
+.avgbox{margin:18px auto;padding:16px 20px;background:rgba(255,255,255,.14);border-radius:14px;max-width:420px}
+.avgbox span{display:block;color:#ffd9dc;font-size:.92rem}.avgbox strong{display:block;font:700 2.3rem 'Bricolage Grotesque',sans-serif;color:#fff}

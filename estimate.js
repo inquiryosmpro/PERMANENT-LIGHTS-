@@ -50,7 +50,7 @@ $('calc').onclick=function(){
  function pct(p){$('lfill').style.width=p+'%';$('lstat').textContent=(p<100?'Preparing your custom quote… ':'All done ')+Math.round(p)+'%';}
  function finish(){if(done)return;done=true;pct(100);
   sent.then(function(okk){
-   if(!okk){$('rtitle').textContent='We couldn’t send your form';$('rmsg').textContent='Please call us at 437-967-6464 and we’ll take your details over the phone.';}
+   if(!okk){var ab=document.querySelector('.avgbox');if(ab)ab.hidden=true;$('rtitle').textContent='We couldn’t send your form';$('rmsg').textContent='Please call us at 437-967-6464 and we’ll take your details over the phone.';}
    setTimeout(function(){$('result').hidden=false;if($('result').scrollIntoView)$('result').scrollIntoView({behavior:'smooth',block:'center'});},500);});}
  function fallback(){if(fb||done)return;fb=true;v.style.display='none';var t=0,iv=setInterval(function(){t++;pct(50+t*5);if(t>=10){clearInterval(iv);finish();}},800);}
  pct(50);
